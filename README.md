@@ -118,9 +118,25 @@ Diálogo del sistema pidiendo ubicación con el aviso *"Activa la ubicación par
 
 ![Permiso bloqueado](docs/screenshots/permiso-bloqueado.jpeg)
 
-Ubicación desactivada: aviso amarillo *"La cámara sigue funcionando, pero tus fotos no tendrán ubicación."* con botón **Abrir Ajustes**. Cámara bloqueada: `PermissionPrimer` con el mismo botón (`permiso-bloqueado-camara.jpeg`).
+Ubicación desactivada: aviso amarillo *"La cámara sigue funcionando, pero tus fotos no tendrán ubicación."* con botón **Abrir Ajustes**.
 
-Capturas extra en `docs/screenshots/`: `galeria-permiso.jpeg` (diálogo de fototeca), `galeria-bloqueada.jpeg` (alerta con Abrir Ajustes), `mapa-eliminar.jpeg` (borrado desde el marcador).
+Cámara bloqueada (`PermissionPrimer` con el mismo botón):
+
+![Permiso de cámara bloqueado](docs/screenshots/permiso-bloqueado-camara.jpeg)
+
+### Extras
+
+Permiso de fototeca al importar desde galería:
+
+![Permiso de galería](docs/screenshots/galeria-permiso.jpeg)
+
+Galería bloqueada con botón **Abrir Ajustes**:
+
+![Galería bloqueada](docs/screenshots/galeria-bloqueada.jpeg)
+
+Borrado individual desde el marcador del mapa:
+
+![Eliminar desde el mapa](docs/screenshots/mapa-eliminar.jpeg)
 
 | | |
 |---|---|
