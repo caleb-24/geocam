@@ -183,6 +183,6 @@ Borrado individual desde el marcador del mapa:
 
 ---
 
-**Estudiante**: [Tu nombre]  
+**Estudiante**: Caleb Reyes  
 **Semana**: 6  
 **Proyecto**: GeoCam - Taller Integrador 2
