@@ -218,6 +218,17 @@ Checklist previo a entrega: permisos en contexto, cámara sin ubicación, botón
 - `npx expo lint` → 0 errores en archivos propios (solo 1 error + 2 warnings pre-existentes del template: `use-color-scheme.web.ts`, `_layout.tsx` imports).
 - Docs Expo verificadas (SDK 57): `camera`, `location`, `accelerometer`, `splash-screen` — `useCameraPermissions` solo lee (no auto-pide), `CameraView` exige desmontar sin foco, `watchPositionAsync` requiere `remove()`.
 
+## 8. Importar desde Galería - R2 (Septiembre 29, 2026)
+
+**Prompt**: "falta seleccionar una foto de galeria".
+
+**Implementación** (API verificada en docs Expo SDK 57):
+- `hooks/useGallery.ts`: `useMediaLibraryPermissions()` (solo lee al montar, pide en contexto al tocar el botón), `launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 })`.
+- Resultado tipado como unión `GalleryPickOutcome`: `picked | canceled | denied | blocked | error` — sin `any`.
+- Bloqueado → `Alert` con botón **Abrir Ajustes** (`Linking.openSettings()`); denegado/error → mensaje como estado en `galleryError`, visible en la UI.
+- Foto de galería se etiqueta con ubicación actual si hay permiso, si no `coords: null` con `source: 'gallery'`.
+- Botón en `geocam.tsx` (slot inferior izquierdo): ícono `images`, o la miniatura de la última foto para elegir otra.
+
 ---
 
 **Total de Alucinaciones Detectadas**: 3 menores (todas corregidas)  

@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { View, Text, Pressable, Image, StyleSheet, Alert } from 'react-native';
 import { CameraView } from 'expo-camera';
+import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from 'expo-router';
 import { useCamera } from '@/hooks/useCamera';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
 import { useShake } from '@/hooks/useShake';
+import { useGallery } from '@/hooks/useGallery';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { useGeoPhotos } from '@/context/GeoPhotosContext';
 import type { GeoPhoto } from '@/types/geo';
@@ -95,6 +97,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
+  galleryButton: {
+    height: 56,
+    width: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
   captureButton: {
     height: 80,
     width: 80,
@@ -118,10 +130,6 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 24,
   },
-  spacer: {
-    height: 56,
-    width: 56,
-  },
 });
 
 export default function GeoCamScreen() {
@@ -143,6 +151,12 @@ export default function GeoCamScreen() {
     error: camError,
   } = useCamera();
   const geo = useGeoLocation({ watch: isFocused });
+  const {
+    pickImage,
+    isPicking,
+    error: galleryError,
+    openSettings: openGallerySettings,
+  } = useGallery();
   const { addPhoto, photos, clearAll } = useGeoPhotos();
   const [lastPhoto, setLastPhoto] = useState<GeoPhoto | null>(null);
 
@@ -220,10 +234,49 @@ export default function GeoCamScreen() {
     );
   };
 
+  const handlePickGallery = async (): Promise<void> => {
+    const outcome = await pickImage();
+    if (outcome.status === 'canceled' || outcome.status === 'denied') return;
+    if (outcome.status === 'blocked') {
+      Alert.alert(
+        'Galería bloqueada',
+        'Desactivaste el acceso a fotos. Habilítalo en Ajustes para elegir imágenes.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Abrir Ajustes', onPress: openGallerySettings },
+        ]
+      );
+      return;
+    }
+    if (outcome.status === 'error') return; // error ya visible como estado
+
+    // Igual que la cámara: sin ubicación se guarda igual, con coords: null.
+    const coords =
+      geo.permission === 'granted' ? (geo.coords ?? (await geo.getCurrent())) : null;
+
+    const geoPhoto: GeoPhoto = {
+      id: String(Date.now()),
+      uri: outcome.asset.uri,
+      coords,
+      source: 'gallery',
+      createdAt: Date.now(),
+    };
+
+    addPhoto(geoPhoto);
+    setLastPhoto(geoPhoto);
+
+    Alert.alert(
+      'Foto agregada',
+      coords
+        ? `Desde galería, con ubicación.\nTotal: ${photos.length + 1}`
+        : `Desde galería, sin ubicación.\nTotal: ${photos.length + 1}`
+    );
+  };
+
   const showLocationNotice =
     geo.permission !== 'granted' && geo.permission !== 'checking';
   const locationBlocked = geo.permission === 'blocked';
-  const displayError = camError ?? geo.error ?? shake.error;
+  const displayError = camError ?? geo.error ?? shake.error ?? galleryError;
 
   return (
     <View style={styles.container}>
@@ -287,9 +340,24 @@ export default function GeoCamScreen() {
 
       <View style={styles.controlsView}>
         {lastPhoto ? (
-          <Image source={{ uri: lastPhoto.uri }} style={styles.thumbnail} />
+          <Pressable
+            onPress={handlePickGallery}
+            disabled={isPicking}
+            accessibilityRole="button"
+            accessibilityLabel="Elegir foto de galería"
+          >
+            <Image source={{ uri: lastPhoto.uri }} style={styles.thumbnail} />
+          </Pressable>
         ) : (
-          <View style={styles.spacer} />
+          <Pressable
+            onPress={handlePickGallery}
+            disabled={isPicking}
+            style={styles.galleryButton}
+            accessibilityRole="button"
+            accessibilityLabel="Elegir foto de galería"
+          >
+            <Ionicons name="images" size={28} color="#fff" />
+          </Pressable>
         )}
 
         <Pressable

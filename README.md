@@ -8,6 +8,7 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 - **Cámara en vivo** con toggle front/back
 - **Ubicación en tiempo real** mostrando coordenadas y precisión
 - **Captura de fotos** con degradación elegante
+- **Importar desde galería** (botón inferior izquierdo) con permiso en contexto
 - **Banner inteligente** que pide ubicación sin bloquear la cámara
 - **Agitar para borrar** todas las fotos con confirmación
 
@@ -30,7 +31,9 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 - Provider en root layout
 
 ### R2. Importar desde Galería
-*(Opcional - requiere `expo-image-picker` y UI adicional)*
+- `hooks/useGallery.ts` con `useMediaLibraryPermissions()` (permiso en contexto) y `launchImageLibraryAsync({ mediaTypes: ['images'] })`
+- Botón de galería en GeoCam (ícono, o miniatura de la última foto para elegir otra)
+- Degradación elegante: sin ubicación se guarda con `coords: null`, `source: 'gallery'`
 
 ### R3. Pestaña Mapa
 - MapView con Markers para cada foto
@@ -71,6 +74,7 @@ src/
 ├── hooks/
 │   ├── useGeoLocation.ts        # GPS + permisos + limpieza
 │   ├── useCamera.ts             # Cámara + permisos
+│   ├── useGallery.ts            # Galería + permiso de fotos
 │   └── useShake.ts              # Acelerómetro para agitado
 ├── components/
 │   └── PermissionPrimer.tsx     # Pantalla de permisos
