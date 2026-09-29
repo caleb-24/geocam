@@ -67,11 +67,11 @@ Primero generó con `className` (NativeWind), pero generó código que no compil
 
 **Correcciones aplicadas**:
 ```typescript
-// ❌ Generado (no compilaba):
+//  Generado (no compilaba):
 <View className="flex-1 bg-neutral-950">
 <Pressable className="rounded-full bg-emerald-500">
 
-// ✅ Corregido (React Native puro):
+//  Corregido (React Native puro):
 <View style={{ flex: 1, backgroundColor: '#111' }}>
 <Pressable style={styles.button}>
 ```
@@ -80,7 +80,7 @@ Primero generó con `className` (NativeWind), pero generó código que no compil
 Evolucionó a través de 3 versiones según feedback del usuario:
 1. **Grid + mapa** → Usuario: "solo debe salir el mapa"
 2. **Solo mapa + info** → Usuario: "y la miniatura de la foto"
-3. **Mapa + miniaturas en callout** → ✅ Final
+3. **Mapa + miniaturas en callout** →  Final
 
 ### ¿Qué modifiqué/corregí?
 
@@ -96,7 +96,7 @@ Evolucionó a través de 3 versiones según feedback del usuario:
 ### Alucinación 1: className en React Native
 La IA generó código con `className` de NativeWind:
 ```typescript
-// ❌ Alucinación
+//  Alucinación
 <View className="flex-1 bg-neutral-950 px-8">
   <Text className="text-center text-2xl font-bold text-white">
 ```
@@ -105,7 +105,7 @@ La IA generó código con `className` de NativeWind:
 
 **Corrección**: Reescribí con `StyleSheet.create()` y propiedades estándar:
 ```typescript
-// ✅ Corregido
+//  Corregido
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#111' },
   title: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
 ### Alucinación 2: Ruta de MapView
 La IA intentó usar una ruta incompleta para MapView:
 ```typescript
-// ❌ Error en callout
+//  Error en callout
 <Callout>
   <View style={styles.calloutContainer}>
 ```
@@ -130,10 +130,10 @@ La IA intentó usar una ruta incompleta para MapView:
 
 ### Alucinación 3: Nombre de propiedad StyleSheet
 ```typescript
-// ❌ Alucinación
+//  Alucinación
 style={StyleSheet.absoluteFillObject}
 
-// ✅ Correcto
+//  Correcto
 style={StyleSheet.absoluteFill}
 ```
 
@@ -163,9 +163,9 @@ La guía enfatizaba: "sin ubicación → foto guardada igual, pero con coords: n
 
 Claude lo implementó correctamente:
 ```typescript
-const coords = 
-  geo.permission === 'granted' 
-    ? geo.coords ?? (await geo.getCurrent()) 
+const coords =
+  geo.permission === 'granted'
+    ? geo.coords ?? (await geo.getCurrent())
     : null; // Foto sin ubicación, pero guardada
 ```
 
@@ -173,14 +173,14 @@ Esto es **mejor UX** que rechazar la captura si no hay GPS.
 
 ## 5. Validación de API Correctas
 
-### ✅ APIs Correctas Usadas
+### APIs Correctas Usadas
 - `CameraView` + `useCameraPermissions()` (Expo SDK 57 nueva API)
 - `expo-location` para permisos y GPS
 - `Accelerometer` para sensores
 - `react-native-maps` para MapView
 - `expo-router` con estructura (tabs)
 
-### ❌ APIs Evitadas (Alucinaciones Comunes)
+### APIs Evitadas (Alucinaciones Comunes)
 - `import { Camera } from 'expo-camera'` ← Antigua
 - `Camera.requestCameraPermissionsAsync()` ← Antigua
 - `import * as Permissions from 'expo-permissions'` ← Retirado

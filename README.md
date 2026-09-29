@@ -1,51 +1,51 @@
-# 📸 GeoCam - Semana 6
+# GeoCam - Semana 6
 
 Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona al movimiento del teléfono, construida con Expo SDK 57 y Custom Hooks tipados.
 
-## ✨ Características
+## Características
 
-### 🎥 Pantalla GeoCam
+### Pantalla GeoCam
 - **Cámara en vivo** con toggle front/back
 - **Ubicación en tiempo real** mostrando coordenadas y precisión
 - **Captura de fotos** con degradación elegante
 - **Banner inteligente** que pide ubicación sin bloquear la cámara
 - **Agitar para borrar** todas las fotos con confirmación
 
-### 🗺️ Pantalla Mapa
+### Pantalla Mapa
 - **MapView interactivo** con markers de cada foto
 - **Miniaturas clickeables** de las fotos en los markers
 - **Información de ubicación** (coordenadas y precisión)
 - **Grid de fotos** sin ubicación
 
-### 🔐 Permisos Robustos
+### Permisos Robustos
 - **Máquina de estados**: checking → undetermined → granted/denied/blocked
 - **Pantalla PermissionPrimer** que explica antes de pedir
 - **Botón "Abrir Ajustes"** cuando el permiso está bloqueado
 - **Degradación elegante**: sin ubicación → foto sin coords
 
-## 📋 Requisitos Implementados
+## Requisitos Implementados
 
-### R1. Estado Global ✅
+### R1. Estado Global
 - `GeoPhotosContext.tsx` con `addPhoto`, `removePhoto`, `clearAll`
 - Provider en root layout
 
-### R2. Importar desde Galería ❌
+### R2. Importar desde Galería
 *(Opcional - requiere `expo-image-picker` y UI adicional)*
 
-### R3. Pestaña Mapa ✅
+### R3. Pestaña Mapa
 - MapView con Markers para cada foto
 - Miniaturas en los markers
 - Fotos sin ubicación listadas aparte
 
-### R4. useShake Hook ✅
+### R4. useShake Hook
 - Detecta agitado con `Accelerometer`
 - Pregunta antes de borrar todas las fotos
 - Cooldown de 1.5s para evitar borrados accidentales
 
-### R5. AI-LOG ✅
+### R5. AI-LOG
 - Registro de prompts, correcciones y alucinaciones
 
-## 🛠️ Instalación y Ejecución
+## Instalación y Ejecución
 
 ```bash
 cd geocam
@@ -55,9 +55,9 @@ npx expo start
 
 Escanea el código QR con **Expo Go** en tu teléfono físico.
 
-> ⚠️ **Nota**: La cámara NO funciona en simulador iOS. Necesitas un teléfono físico con Expo Go.
+> **Nota**: La cámara NO funciona en simulador iOS. Necesitas un teléfono físico con Expo Go.
 
-## 📁 Estructura de Archivos
+## Estructura de Archivos
 
 ```
 src/
@@ -80,14 +80,14 @@ src/
     └── geo.ts                   # TypeScript types
 ```
 
-## 🔍 Estados de Permiso
+## Estados de Permiso
 
-> 📷 **Capturas pendientes de tomar en dispositivo físico** (la cámara no funciona en simulador).
+> **Capturas pendientes de tomar en dispositivo físico** (la cámara no funciona en simulador).
 > Guarda las imágenes en `docs/screenshots/` con estos nombres y aparecerán aquí:
 > `permiso-concedido.png`, `permiso-rechazado.png`, `permiso-bloqueado.png`
 > (o un GIF del flujo completo como `docs/screenshots/permisos.gif`).
 
-### Estado: Concedido (granted) ✅
+### Estado: Concedido (granted)
 
 ![Permiso concedido](docs/screenshots/permiso-concedido.png)
 
@@ -97,7 +97,7 @@ src/
 | **Qué se ve** | Cámara activa, coordenadas en vivo (`±X m`), botón de captura funcional |
 | **Código** | `camPermission === 'granted'` → render de `CameraView` (`geocam.tsx`); `geo.coords` en vivo por `watchPositionAsync` |
 
-### Estado: Rechazado (denied) ⚠️
+### Estado: Rechazado (denied)
 
 ![Permiso rechazado](docs/screenshots/permiso-rechazado.png)
 
@@ -108,7 +108,7 @@ src/
 | **Qué se ve (cámara)** | Pantalla `PermissionPrimer` + botón **Permitir acceso** |
 | **Código** | `permission === 'denied'` → `canAskAgain === true`, se puede re-llamar `requestPermission()` |
 
-### Estado: Bloqueado (blocked) 🔒
+### Estado: Bloqueado (blocked)
 
 ![Permiso bloqueado](docs/screenshots/permiso-bloqueado.png)
 
@@ -126,7 +126,7 @@ src/
 3. **Bloqueado**: negar dos veces, o ir a Ajustes → revocar el permiso → volver a la app → captura.
 4. **Concedido**: aceptar el diálogo → captura con coordenadas visibles.
 
-## ✅ Verificación Previa a Entrega
+## Verificación Previa a Entrega
 
 - [x] Hooks tipados sin `any`
 - [x] Permisos en contexto (no al abrir la app)
@@ -137,7 +137,7 @@ src/
 - [x] useGeoLocation, useCamera, useShake implementados
 - [x] AI-LOG.md documentado
 
-## 🚀 Tecnologías
+## Tecnologías
 
 - **React Native** 0.86.3
 - **Expo SDK** 57.0.25
@@ -148,7 +148,7 @@ src/
 - **react-native-maps**: MapView interactivo
 - **Expo Router**: Navegación con tabs
 
-## 📚 Referencias
+## Referencias
 
 - [Expo Camera Docs](https://docs.expo.dev/camera/overview/)
 - [Expo Location Docs](https://docs.expo.dev/location/location/)
