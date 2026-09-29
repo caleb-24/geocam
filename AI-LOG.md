@@ -229,6 +229,15 @@ Checklist previo a entrega: permisos en contexto, cámara sin ubicación, botón
 - Foto de galería se etiqueta con ubicación actual si hay permiso, si no `coords: null` con `source: 'gallery'`.
 - Botón en `geocam.tsx` (slot inferior izquierdo): ícono `images`, o la miniatura de la última foto para elegir otra.
 
+## 9. Borrado individual (Septiembre 29, 2026)
+
+**Prompt**: "si" (agregar borrado por foto, antes solo agitar para borrar todo).
+
+**Implementación**:
+- GeoCam: `onLongPress` en la miniatura → `Alert` de confirmación → `removePhoto(id)`; `lastPhoto` pasa a la más reciente restante.
+- Mapa: `Marker.onCalloutPress` → confirmación → `removePhoto(id)`.
+- Corrección propia: el primer `useCallback` quedó tras un `return` temprano (violación de reglas de hooks) → movido junto a los demás hooks. `tsc` y `lint` limpios.
+
 ---
 
 **Total de Alucinaciones Detectadas**: 3 menores (todas corregidas)  

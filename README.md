@@ -11,6 +11,7 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 - **Importar desde galería** (botón inferior izquierdo) con permiso en contexto
 - **Banner inteligente** que pide ubicación sin bloquear la cámara
 - **Agitar para borrar** todas las fotos con confirmación
+- **Borrar una foto**: mantén presionada la miniatura en GeoCam, o toca la foto del marcador en Mapa
 
 ### Pantalla Mapa
 - **MapView interactivo** con markers de cada foto

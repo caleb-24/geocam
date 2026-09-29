@@ -157,7 +157,7 @@ export default function GeoCamScreen() {
     error: galleryError,
     openSettings: openGallerySettings,
   } = useGallery();
-  const { addPhoto, photos, clearAll } = useGeoPhotos();
+  const { addPhoto, photos, removePhoto, clearAll } = useGeoPhotos();
   const [lastPhoto, setLastPhoto] = useState<GeoPhoto | null>(null);
 
   const handleShake = useCallback(() => {
@@ -190,6 +190,23 @@ export default function GeoCamScreen() {
     cooldownMs: 1500,
     enabled: isFocused,
   });
+
+  const handleDeleteOne = useCallback((): void => {
+    if (!lastPhoto) return;
+    const target = lastPhoto;
+    Alert.alert('¿Eliminar esta foto?', 'Solo se eliminará la última foto.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: () => {
+          removePhoto(target.id);
+          const remaining = photos.filter((p) => p.id !== target.id);
+          setLastPhoto(remaining[0] ?? null);
+        },
+      },
+    ]);
+  }, [lastPhoto, photos, removePhoto]);
 
   if (camPermission === 'checking') {
     return <View style={{ flex: 1, backgroundColor: '#111' }} />;
@@ -342,9 +359,10 @@ export default function GeoCamScreen() {
         {lastPhoto ? (
           <Pressable
             onPress={handlePickGallery}
+            onLongPress={handleDeleteOne}
             disabled={isPicking}
             accessibilityRole="button"
-            accessibilityLabel="Elegir foto de galería"
+            accessibilityLabel="Elegir foto de galería. Mantén presionado para eliminar la última foto."
           >
             <Image source={{ uri: lastPhoto.uri }} style={styles.thumbnail} />
           </Pressable>

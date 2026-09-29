@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
 import MapView, { Marker, Callout, type Region } from 'react-native-maps';
 import { useIsFocused } from 'expo-router';
 import { useGeoPhotos } from '@/context/GeoPhotosContext';
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
 export default function MapaScreen() {
   // GPS solo con la pantalla enfocada: al salir del tab se limpia el watch.
   const isFocused = useIsFocused();
-  const { photos } = useGeoPhotos();
+  const { photos, removePhoto } = useGeoPhotos();
   const {
     permission: locPermission,
     coords: locCoords,
@@ -157,6 +157,20 @@ export default function MapaScreen() {
       mapRef.current?.animateToRegion(regionForCoords(locCoords), 500);
     }
   }, [locCoords, photosWithCoords.length]);
+
+  const handleDeletePhoto = useCallback(
+    (photo: LocatedPhoto): void => {
+      Alert.alert('¿Eliminar esta foto?', 'Se quitará del mapa y de la lista.', [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => removePhoto(photo.id),
+        },
+      ]);
+    },
+    [removePhoto]
+  );
 
   const handleMyLocation = useCallback(async (): Promise<void> => {
     if (locPermission === 'blocked') {
@@ -223,6 +237,7 @@ export default function MapaScreen() {
               latitude: photo.coords.latitude,
               longitude: photo.coords.longitude,
             }}
+            onCalloutPress={() => handleDeletePhoto(photo)}
           >
             <View
               style={{
@@ -250,7 +265,7 @@ export default function MapaScreen() {
         <Text style={styles.infoText}>
           📍 {photosWithCoords.length} foto{photosWithCoords.length !== 1 ? 's' : ''} en el mapa
         </Text>
-        <Text style={styles.infoSubtext}>Toca los marcadores para ver fotos</Text>
+        <Text style={styles.infoSubtext}>Toca un marcador para ver la foto, tócala para eliminarla</Text>
       </View>
 
       {locError && (
