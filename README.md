@@ -87,14 +87,13 @@ src/
 
 ## Estados de Permiso
 
-> **Capturas pendientes de tomar en dispositivo físico** (la cámara no funciona en simulador).
-> Guarda las imágenes en `docs/screenshots/` con estos nombres y aparecerán aquí:
-> `permiso-concedido.png`, `permiso-rechazado.png`, `permiso-bloqueado.png`
-> (o un GIF del flujo completo como `docs/screenshots/permisos.gif`).
+Capturas tomadas en dispositivo físico (iPhone + Expo Go).
 
 ### Estado: Concedido (granted)
 
-![Permiso concedido](docs/screenshots/permiso-concedido.png)
+![Permiso concedido](docs/screenshots/permiso-concedido.jpeg)
+
+Mapa centrado en Riohacha con marcador de foto geolocalizada: flujo completo con ubicación concedida (coordenadas en vivo `±5 m` en GeoCam).
 
 | | |
 |---|---|
@@ -104,7 +103,9 @@ src/
 
 ### Estado: Rechazado (denied)
 
-![Permiso rechazado](docs/screenshots/permiso-rechazado.png)
+![Permiso rechazado](docs/screenshots/permiso-rechazado.jpeg)
+
+Diálogo del sistema pidiendo ubicación con el aviso *"Activa la ubicación para etiquetar tus fotos. La cámara funciona sin ubicación."* y botón **Permitir acceso** detrás.
 
 | | |
 |---|---|
@@ -115,7 +116,11 @@ src/
 
 ### Estado: Bloqueado (blocked)
 
-![Permiso bloqueado](docs/screenshots/permiso-bloqueado.png)
+![Permiso bloqueado](docs/screenshots/permiso-bloqueado.jpeg)
+
+Ubicación desactivada: aviso amarillo *"La cámara sigue funcionando, pero tus fotos no tendrán ubicación."* con botón **Abrir Ajustes**. Cámara bloqueada: `PermissionPrimer` con el mismo botón (`permiso-bloqueado-camara.jpeg`).
+
+Capturas extra en `docs/screenshots/`: `galeria-permiso.jpeg` (diálogo de fototeca), `galeria-bloqueada.jpeg` (alerta con Abrir Ajustes), `mapa-eliminar.jpeg` (borrado desde el marcador).
 
 | | |
 |---|---|

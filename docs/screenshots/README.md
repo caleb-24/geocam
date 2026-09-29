@@ -1,8 +1,9 @@
-Las capturas de los tres estados de permiso van aquí:
+Capturas de los tres estados de permiso (iPhone + Expo Go):
 
-- `permiso-concedido.png` — cámara activa con coordenadas en vivo
-- `permiso-rechazado.png` — aviso amarillo + botón "Permitir acceso"
-- `permiso-bloqueado.png` — aviso + botón "Abrir Ajustes"
-- `permisos.gif` (opcional) — flujo completo concedido → rechazado → bloqueado
-
-Ver "Cómo tomar las capturas" en el README.
+- `permiso-concedido.jpeg` — mapa con foto geolocalizada en Riohacha
+- `permiso-rechazado.jpeg` — diálogo del sistema + aviso con "Permitir acceso"
+- `permiso-bloqueado.jpeg` — aviso de ubicación desactivada + "Abrir Ajustes"
+- `permiso-bloqueado-camara.jpeg` — PermissionPrimer de cámara + "Abrir Ajustes"
+- `galeria-permiso.jpeg` — diálogo de acceso a la fototeca
+- `galeria-bloqueada.jpeg` — alerta de galería bloqueada + "Abrir Ajustes"
+- `mapa-eliminar.jpeg` — confirmación de borrado desde el marcador
