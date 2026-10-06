@@ -8,7 +8,7 @@ import { useGeoLocation } from '@/hooks/useGeoLocation';
 import { useShake } from '@/hooks/useShake';
 import { useGallery } from '@/hooks/useGallery';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
-import { useGeoPhotos } from '@/context/GeoPhotosContext';
+import { usePhotos } from '@/hooks/usePhotos';
 import type { GeoPhoto } from '@/types/geo';
 
 const styles = StyleSheet.create({
@@ -157,7 +157,7 @@ export default function GeoCamScreen() {
     error: galleryError,
     openSettings: openGallerySettings,
   } = useGallery();
-  const { addPhoto, photos, removePhoto, clearAll } = useGeoPhotos();
+  const { addPhoto, photos, removePhoto, clearAll } = usePhotos();
   const [lastPhoto, setLastPhoto] = useState<GeoPhoto | null>(null);
 
   const handleShake = useCallback(() => {
@@ -175,9 +175,11 @@ export default function GeoCamScreen() {
           text: 'Borrar',
           style: 'destructive',
           onPress: () => {
-            clearAll();
-            setLastPhoto(null);
-            Alert.alert('Completado', 'Todas las fotos han sido eliminadas');
+            void (async () => {
+              await clearAll();
+              setLastPhoto(null);
+              Alert.alert('Completado', 'Todas las fotos han sido eliminadas');
+            })();
           },
         },
       ]
@@ -200,9 +202,11 @@ export default function GeoCamScreen() {
         text: 'Eliminar',
         style: 'destructive',
         onPress: () => {
-          removePhoto(target.id);
-          const remaining = photos.filter((p) => p.id !== target.id);
-          setLastPhoto(remaining[0] ?? null);
+          void (async () => {
+            await removePhoto(target.id);
+            const remaining = photos.filter((p) => p.id !== target.id);
+            setLastPhoto(remaining[0] ?? null);
+          })();
         },
       },
     ]);
@@ -232,15 +236,11 @@ export default function GeoCamScreen() {
     const coords =
       geo.permission === 'granted' ? (geo.coords ?? (await geo.getCurrent())) : null;
 
-    const geoPhoto: GeoPhoto = {
-      id: String(Date.now()),
+    const geoPhoto: GeoPhoto = await addPhoto({
       uri: photo.uri,
       coords,
       source: 'camera',
-      createdAt: Date.now(),
-    };
-
-    addPhoto(geoPhoto);
+    });
     setLastPhoto(geoPhoto);
 
     Alert.alert(
@@ -271,15 +271,11 @@ export default function GeoCamScreen() {
     const coords =
       geo.permission === 'granted' ? (geo.coords ?? (await geo.getCurrent())) : null;
 
-    const geoPhoto: GeoPhoto = {
-      id: String(Date.now()),
+    const geoPhoto: GeoPhoto = await addPhoto({
       uri: outcome.asset.uri,
       coords,
       source: 'gallery',
-      createdAt: Date.now(),
-    };
-
-    addPhoto(geoPhoto);
+    });
     setLastPhoto(geoPhoto);
 
     Alert.alert(

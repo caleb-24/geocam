@@ -244,3 +244,45 @@ Checklist previo a entrega: permisos en contexto, cámara sin ubicación, botón
 **Total de Versiones Iteradas**: Mapa (3), Geocam (1), General (1)  
 **Errores de TypeScript Iniciales**: 28 → Reducidos a 0 en src/
 
+---
+
+# Semana 7 — GeoCam persistente (SQLite + Drizzle ORM)
+
+**Estudiante(s):** Caleb
+**Semana:** 7
+**Proyecto:** GeoCam persistente – Taller Integrador 2
+**Fecha:** Octubre 6, 2026
+
+## 1. Prompts Utilizados
+
+- "Reemplaza el GeoPhotosContext en memoria por SQLite con Drizzle: instala dependencias, crea drizzle.config.ts, babel.config.js, metro.config.js y genera la primera migración con la tabla photos."
+- "Crea db/client.ts con openDatabaseSync y protege el layout raíz con useMigrations."
+- "Escribe el repositorio photos.ts (listQuery, withLocationQuery con isNotNull, create, remove, clearAll) y el hook usePhotos que convierta coords a columnas planas."
+- "Crea la tabla albums con FK opcional onDelete set null, agrega note y favorite a photos como segunda migración aditiva, sin editar migraciones a mano."
+- "Pantalla app/foto/[id].tsx para ver, editar nota, favorita, mover de álbum y eliminar con confirmación; lista con buscador por nota y filtros por álbum/favoritas con useLiveQuery."
+- "Archivos permanentes con la API nueva de expo-file-system (File, Directory, Paths): copiar de caché a documentos al guardar, borrar el archivo al eliminar el registro."
+
+## 2. Código Generado vs. Código Modificado
+
+- **¿Qué generó la IA?:** El esquema con `albumId` FK via `references(() => albums.id, { onDelete: 'set null' })`, el cliente con `drizzle-orm/expo-sqlite`, los repositorios y el servicio `photoFiles.ts` con `source.copy(destination)` sin `await`.
+- **¿Qué modifiqué/corregí?:**
+  1. `persistPhoto` pasó a `async` con `await source.copy(destination)`: en SDK 57 `copy()` devuelve `Promise<void>`; sin `await` se guardaba en SQLite una ruta cuyo archivo aún no existía.
+  2. Borrado de álbum con `SET NULL` explícito en el repositorio (transacción: primero `UPDATE photos SET album_id = NULL`, luego `DELETE`), porque la migración generada por drizzle-kit emite `REFERENCES albums(id)` sin la cláusula `ON DELETE SET NULL`, y las migraciones no se editan a mano. Además `PRAGMA foreign_keys = ON` en el cliente, sin el cual SQLite ignora la regla.
+  3. Pantalla de detalle dividida en `FotoDetailScreen` (carga + título) y `FotoEditor` con `key={photo.id}`: así el `TextInput` se inicializa con la nota sin `setState` dentro de un efecto (lo exige el lint `react-hooks/set-state-in-effect`).
+  4. `babel.config.js` sin presets de NativeWind: el proyecto no tiene NativeWind instalado (solo un comentario en `theme.ts`), así que solo lleva `babel-preset-expo` + `inline-import`.
+
+## 3. Alucinaciones o Errores Detectados
+
+- **Migración sin ON DELETE:** la IA asumió que `references(..., { onDelete: 'set null' })` bastaba. Verificando el SQL generado (`ALTER TABLE photos ADD album_id integer REFERENCES albums(id)`) se confirmó que la cláusula no aparece. Corrección a nivel repositorio (punto 2 anterior), documentada también en el comentario del código.
+- **Mezcla de APIs de expo-file-system:** el esquema de referencia del taller muestra `source.copy(destination)` sincrónico. La firma real instalada (verificada en `node_modules/expo-file-system/build`) es `copy(): Promise<void>` (existe además `copySync`). Se usó `await copy()`; `exists` es propiedad (`file.exists`), no método.
+- **Rutas tipadas desactualizadas:** tras crear `foto/[id].tsx`, `tsc` rechazó el `pathname` porque `.expo/types/router.d.ts` aún no incluía la ruta. Se regeneró corriendo el bundler una vez; no se tocó el código para "conformar" el error.
+- **APIs evitadas (verificadas contra `node_modules`, no de memoria):** `SQLite.openDatabase` / `db.transaction(tx => tx.executeSql(...))` (retirada), `drizzle-orm/better-sqlite3` (driver de Node), `drizzle-kit push` (para servidores), dinero en `real` (no aplica: coordenadas sí son decimales), `FileSystem.copyAsync` mezclado con `new File()` (APIs distintas).
+- **Pre-existente, no tocado:** `npx expo-doctor` reporta drift de parches (`expo 57.0.25` vs `~57.0.27` esperado, etc.) anterior a este taller; y el lint mantiene 1 error + warnings del template (`use-color-scheme.web.ts`, imports de `expo-router`).
+
+## 4. Verificación
+
+- `npx tsc --noEmit` → 0 errores.
+- `npx expo lint` → 0 errores en archivos propios.
+- `drizzle/` versionada con `0000` (photos) + `0001` (aditiva: albums, album_id, note, favorite) y `migrations.js` con ambas.
+- Pendiente en dispositivo físico (T6): 3 fotos → cerrar Expo Go → reabrir → marcadores intactos; modo avión; filtros que se recalculan solos.
+

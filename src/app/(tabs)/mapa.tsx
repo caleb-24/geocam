@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, Pressable, Alert } from 'react-native';
-import MapView, { Marker, Callout, type Region } from 'react-native-maps';
-import { useIsFocused } from 'expo-router';
-import { useGeoPhotos } from '@/context/GeoPhotosContext';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Image, Pressable, Alert, FlatList, Dimensions } from 'react-native';
+import MapView, { Marker, type Region } from 'react-native-maps';
+import { useIsFocused, useRouter } from 'expo-router';
+import { usePhotos } from '@/hooks/usePhotos';
 import { useGeoLocation } from '@/hooks/useGeoLocation';
-import type { Coords, GeoPhoto } from '@/types/geo';
-
-type LocatedPhoto = GeoPhoto & { coords: Coords };
+import type { Coords, LocatedPhoto } from '@/types/geo';
 
 const DEFAULT_REGION: Region = {
   latitude: 40.7128,
@@ -19,6 +17,32 @@ const CLOSE_DELTA = {
   latitudeDelta: 0.05,
   longitudeDelta: 0.05,
 };
+
+/** Fotos del "mismo lugar": redondeo a 4 decimales (~11 m). */
+const GROUP_PRECISION = 4;
+
+interface PhotoGroup {
+  key: string;
+  latitude: number;
+  longitude: number;
+  photos: LocatedPhoto[];
+}
+
+function groupByLocation(photos: LocatedPhoto[]): PhotoGroup[] {
+  const map = new Map<string, PhotoGroup>();
+  for (const photo of photos) {
+    const latitude = Number(photo.coords.latitude.toFixed(GROUP_PRECISION));
+    const longitude = Number(photo.coords.longitude.toFixed(GROUP_PRECISION));
+    const key = `${latitude},${longitude}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.photos.push(photo);
+    } else {
+      map.set(key, { key, latitude, longitude, photos: [photo] });
+    }
+  }
+  return [...map.values()];
+}
 
 function regionForCoords(coords: Coords): Region {
   return {
@@ -88,10 +112,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  calloutImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
+  marker: {
+    backgroundColor: '#10b981',
+    borderRadius: 50,
+    padding: 8,
+    borderWidth: 3,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markerIcon: {
+    fontSize: 20,
+  },
+  markerBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ef4444',
+    borderRadius: 9999,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  markerBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   myLocationButton: {
     position: 'absolute',
@@ -123,12 +173,86 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.97)',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 8,
+    paddingBottom: 24,
+    maxHeight: '55%',
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#475569',
+    marginBottom: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  sheetTitle: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  sheetCounter: {
+    color: '#10b981',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sheetClose: {
+    color: '#94a3b8',
+    fontSize: 16,
+    fontWeight: '700',
+    padding: 8,
+  },
+  carouselImage: {
+    borderRadius: 12,
+    backgroundColor: '#1e293b',
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  sheetButton: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  detailButton: {
+    backgroundColor: '#10b981',
+  },
+  detailButtonText: {
+    color: '#111',
+    fontWeight: '700',
+  },
+  deleteButton: {
+    backgroundColor: '#7f1d1d',
+  },
+  deleteButtonText: {
+    color: '#fecaca',
+    fontWeight: '700',
+  },
 });
 
 export default function MapaScreen() {
   // GPS solo con la pantalla enfocada: al salir del tab se limpia el watch.
   const isFocused = useIsFocused();
-  const { photos, removePhoto } = useGeoPhotos();
+  const router = useRouter();
+  const { photosWithLocation: photosWithCoords, removePhoto } = usePhotos();
   const {
     permission: locPermission,
     coords: locCoords,
@@ -139,10 +263,14 @@ export default function MapaScreen() {
   } = useGeoLocation({ watch: isFocused });
   const mapRef = useRef<MapView>(null);
   const hasCenteredRef = useRef(false);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
 
-  const photosWithCoords: LocatedPhoto[] = photos.filter(
-    (p): p is LocatedPhoto => p.coords !== null
-  );
+  const groups = useMemo(() => groupByLocation(photosWithCoords), [photosWithCoords]);
+  // El grupo se deriva de los datos en vivo: si se borra la última foto,
+  // la hoja se cierra sola.
+  const selectedGroup = groups.find((g) => g.key === selectedKey) ?? null;
+  const selectedPhoto = selectedGroup?.photos[page] ?? null;
 
   const centerOn = useCallback((region: Region): void => {
     mapRef.current?.animateToRegion(region, 500);
@@ -158,14 +286,25 @@ export default function MapaScreen() {
     }
   }, [locCoords, photosWithCoords.length]);
 
+  const handleSelectGroup = useCallback((key: string): void => {
+    setSelectedKey(key);
+    setPage(0);
+  }, []);
+
   const handleDeletePhoto = useCallback(
-    (photo: LocatedPhoto): void => {
+    (photo: LocatedPhoto, groupSize: number): void => {
       Alert.alert('¿Eliminar esta foto?', 'Se quitará del mapa y de la lista.', [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Eliminar',
           style: 'destructive',
-          onPress: () => removePhoto(photo.id),
+          onPress: () => {
+            void (async () => {
+              await removePhoto(photo.id);
+              // Si era la última del grupo, la hoja se cierra sola.
+              setPage((p) => Math.max(0, Math.min(p, groupSize - 2)));
+            })();
+          },
         },
       ]);
     },
@@ -227,36 +366,26 @@ export default function MapaScreen() {
     );
   }
 
+  const screenWidth = Dimensions.get('window').width;
+  const imageSize = Math.min(280, screenWidth - 64);
+
   return (
     <View style={styles.container}>
       <MapView ref={mapRef} style={styles.map} initialRegion={initialRegion}>
-        {photosWithCoords.map((photo) => (
+        {groups.map((group) => (
           <Marker
-            key={photo.id}
-            coordinate={{
-              latitude: photo.coords.latitude,
-              longitude: photo.coords.longitude,
-            }}
-            onCalloutPress={() => handleDeletePhoto(photo)}
+            key={group.key}
+            coordinate={{ latitude: group.latitude, longitude: group.longitude }}
+            onPress={() => handleSelectGroup(group.key)}
           >
-            <View
-              style={{
-                backgroundColor: '#10b981',
-                borderRadius: 50,
-                padding: 8,
-                borderWidth: 3,
-                borderColor: '#fff',
-              }}
-            >
-              <Text style={{ fontSize: 20 }}>📸</Text>
+            <View style={styles.marker}>
+              <Text style={styles.markerIcon}>📸</Text>
+              {group.photos.length > 1 && (
+                <View style={styles.markerBadge}>
+                  <Text style={styles.markerBadgeText}>{group.photos.length}</Text>
+                </View>
+              )}
             </View>
-
-            <Callout>
-              <Image
-                source={{ uri: photo.uri }}
-                style={styles.calloutImage}
-              />
-            </Callout>
           </Marker>
         ))}
       </MapView>
@@ -265,7 +394,7 @@ export default function MapaScreen() {
         <Text style={styles.infoText}>
           📍 {photosWithCoords.length} foto{photosWithCoords.length !== 1 ? 's' : ''} en el mapa
         </Text>
-        <Text style={styles.infoSubtext}>Toca un marcador para ver la foto, tócala para eliminarla</Text>
+        <Text style={styles.infoSubtext}>Toca un marcador para ver sus fotos en carrusel</Text>
       </View>
 
       {locError && (
@@ -274,11 +403,72 @@ export default function MapaScreen() {
         </View>
       )}
 
+      {selectedGroup && selectedPhoto && (
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>
+              {selectedGroup.photos.length} foto{selectedGroup.photos.length !== 1 ? 's' : ''} aquí
+            </Text>
+            <Text style={styles.sheetCounter}>
+              {Math.min(page + 1, selectedGroup.photos.length)} / {selectedGroup.photos.length}
+            </Text>
+            <Pressable
+              onPress={() => setSelectedKey(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar carrusel"
+            >
+              <Text style={styles.sheetClose}>✕</Text>
+            </Pressable>
+          </View>
+
+          <FlatList
+            data={selectedGroup.photos}
+            keyExtractor={(item) => String(item.id)}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: (screenWidth - imageSize) / 2, gap: 16 }}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (imageSize + 16));
+              setPage(Math.max(0, Math.min(index, selectedGroup.photos.length - 1)));
+            }}
+            renderItem={({ item }) => (
+              <Image
+                source={{ uri: item.uri }}
+                style={[styles.carouselImage, { width: imageSize, height: imageSize }]}
+              />
+            )}
+          />
+
+          <View style={styles.sheetActions}>
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/foto/[id]', params: { id: String(selectedPhoto.id) } })
+              }
+              style={[styles.sheetButton, styles.detailButton]}
+              accessibilityRole="button"
+              accessibilityLabel="Ver detalle de la foto"
+            >
+              <Text style={styles.detailButtonText}>Ver</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleDeletePhoto(selectedPhoto, selectedGroup.photos.length)}
+              style={[styles.sheetButton, styles.deleteButton]}
+              accessibilityRole="button"
+              accessibilityLabel="Eliminar esta foto"
+            >
+              <Text style={styles.deleteButtonText}>Eliminar</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Centrar en mi ubicación"
         onPress={handleMyLocation}
-        style={styles.myLocationButton}
+        style={[styles.myLocationButton, selectedGroup && { bottom: 440 }]}
       >
         <Text style={styles.myLocationText}>◎</Text>
       </Pressable>

@@ -1,6 +1,6 @@
-# GeoCam - Semana 6
+# GeoCam persistente — Semanas 6 y 7
 
-Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona al movimiento del teléfono, construida con Expo SDK 57 y Custom Hooks tipados.
+Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona al movimiento del teléfono, construida con Expo SDK 57 y Custom Hooks tipados. Desde la Semana 7, las fotos y sus coordenadas **sobreviven al cierre de la app** gracias a SQLite con Drizzle ORM (offline-first).
 
 ## Características
 
@@ -18,6 +18,45 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 - **Miniaturas clickeables** de las fotos en los markers
 - **Información de ubicación** (coordenadas y precisión)
 - **Grid de fotos** sin ubicación
+
+### Pantalla Fotos (lista + filtros)
+- **Buscador por nota** (`like`) y filtros por **álbum** y **favoritas**
+- La consulta se reconstruye con `useLiveQuery(consulta, [busqueda, albumId, soloFavoritas])`: todo se recalcula solo
+- Crear álbumes (nombre único) desde la misma pantalla
+- Toca una foto para abrir su detalle
+
+### Detalle de foto (`app/foto/[id].tsx`)
+- Ver foto, **editar nota**, **marcar favorita**, **mover de álbum**
+- **Eliminar con confirmación** (borra el registro SQLite y su archivo)
+
+### Base de datos local offline-first (Semana 7)
+- **SQLite** (`expo-sqlite`) + **Drizzle ORM** (`drizzle-orm/expo-sqlite`)
+- Dos migraciones generadas con `drizzle-kit generate`, ninguna editada a mano:
+  - `0000`: tabla `photos` (uri, coordenadas opcionales, source, fecha)
+  - `0001` (aditiva: los datos anteriores se conservan): tabla `albums` + columnas `album_id`, `note`, `favorite`
+- `useMigrations` protege el layout raíz: sin tablas aplicadas, no hay UI
+- `useLiveQuery` con `enableChangeListener: true`: listas, mapa y totales se actualizan solos
+- Archivos permanentes: al guardar se copia de caché a `documentos/photos/`; al borrar el registro se borra el archivo
+- Funciona en **modo avión** y tras **cerrar Expo Go por completo**
+
+#### Diagrama de tablas
+
+```
+albums                          photos
+┌──────────────┐    ┌─────────────────────────────────┐
+│ id PK AI     │◄───│ id PK AI                        │
+│ name UNIQUE  │    │ uri NOT NULL                    │
+│ created_at   │    │ latitude REAL (nullable)        │
+└──────────────┘    │ longitude REAL (nullable)       │
+                    │ accuracy REAL (nullable)        │
+  Borrar un álbum → │ source camera|gallery NOT NULL  │
+  fotos con         │ album_id FK → albums(id)        │
+  album_id = NULL   │   (al borrar álbum: SET NULL)   │
+  (no se borran)    │ note TEXT (nullable)            │
+                    │ favorite INTEGER bool DEF false │
+                    │ created_at                      │
+                    └─────────────────────────────────┘
+```
 
 ### Permisos Robustos
 - **Máquina de estados**: checking → undetermined → granted/denied/blocked
@@ -54,8 +93,12 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 ```bash
 cd geocam
 npx expo install
-npx expo start
+npx expo start -c
 ```
+
+> Usa `-c` (limpiar caché) la primera vez: Babel y Metro deben registrar el
+> plugin `inline-import` y la extensión `.sql`. Si ves "no such table", la
+> migración no se aplicó: reinicia con `npx expo start -c`.
 
 Escanea el código QR con **Expo Go** en tu teléfono físico.
 
@@ -64,25 +107,40 @@ Escanea el código QR con **Expo Go** en tu teléfono físico.
 ## Estructura de Archivos
 
 ```
+drizzle/
+├── 0000_cool_harry_osborn.sql   # Migración 1: tabla photos
+├── 0001_jazzy_tattoo.sql        # Migración 2 (aditiva): albums + note/favorite/album_id
+├── meta/                        # Journal de drizzle-kit (versionado)
+└── migrations.js                 # Bundle de migraciones (generado, no editar)
 src/
 ├── app/
-│   ├── _layout.tsx              # Root layout con GeoPhotosProvider
+│   ├── _layout.tsx              # Root layout: aplica migraciones con useMigrations
 │   ├── index.tsx                # Redirect a GeoCam
+│   ├── foto/[id].tsx            # Detalle: nota, favorita, álbum, eliminar
 │   └── (tabs)/
-│       ├── _layout.tsx          # Tab navigator (GeoCam + Mapa)
-│       ├── geocam.tsx           # Pantalla cámara
-│       └── mapa.tsx             # Pantalla mapa
+│       ├── _layout.tsx          # Tab navigator (GeoCam + Mapa + Fotos)
+│       ├── geocam.tsx           # Pantalla cámara (usa usePhotos)
+│       ├── mapa.tsx             # Pantalla mapa (usa photosWithLocation)
+│       └── fotos.tsx            # Lista con búsqueda y filtros
+├── db/
+│   ├── schema.ts                # Tablas photos + albums y relaciones
+│   ├── client.ts                # openDatabaseSync + PRAGMA foreign_keys
+│   └── repositories/
+│       ├── photos.ts            # listQuery, withLocationQuery, CRUD, filtros
+│       └── albums.ts            # CRUD de álbumes (borrado con SET NULL explícito)
 ├── hooks/
+│   ├── usePhotos.ts             # photos, photosWithLocation, add/remove/update/clearAll
+│   ├── useAlbums.ts             # Lista y CRUD de álbumes
 │   ├── useGeoLocation.ts        # GPS + permisos + limpieza
 │   ├── useCamera.ts             # Cámara + permisos
 │   ├── useGallery.ts            # Galería + permiso de fotos
-│   └── useShake.ts              # Acelerómetro para agitado
+│   └── useShake.ts              # Acelerómetro para agitado (borra vía clearAll)
+├── services/
+│   └── photoFiles.ts            # Copia caché→documentos, borrado de archivos
 ├── components/
 │   └── PermissionPrimer.tsx     # Pantalla de permisos
-├── context/
-│   └── GeoPhotosContext.tsx     # Estado global de fotos
 └── types/
-    └── geo.ts                   # TypeScript types
+    └── geo.ts                   # Coords, GeoPhoto (id numérico de SQLite), LocatedPhoto
 ```
 
 ## Estados de Permiso
@@ -163,11 +221,30 @@ Borrado individual desde el marcador del mapa:
 - [x] useGeoLocation, useCamera, useShake implementados
 - [x] AI-LOG.md documentado
 
+## Verificación previa a entrega (Semana 7)
+
+- [x] Dos migraciones generadas con `drizzle-kit generate`, ninguna editada a mano
+- [x] Las fotos de antes de la segunda migración se conservan (migración aditiva)
+- [x] Las pantallas no importan Drizzle: solo el layout raíz (`useMigrations`) y los repositorios
+- [x] Crear, leer, actualizar y borrar funcionan; los filtros se actualizan solos (`useLiveQuery`)
+- [x] Las fotos se guardan en documentos y se borran junto con su registro
+- [x] `npx tsc --noEmit` → 0 errores; lint limpio salvo error pre-existente del template
+- [x] README.md y AI-LOG.md en la raíz; carpeta `drizzle/` versionada
+
+### Guion de verificación en dispositivo (T6)
+1. Toma tres fotos (alguna sin ubicación: niega el GPS una vez).
+2. Cierra Expo Go por completo, vuelve a abrir: las fotos y los marcadores del mapa siguen ahí.
+3. Activa modo avión: todo funciona igual (cámara, lista, mapa, filtros).
+4. En Fotos, edita una nota y márcala como favorita: la lista se actualiza sola.
+
 ## Tecnologías
 
 - **React Native** 0.86.3
 - **Expo SDK** 57.0.25
 - **TypeScript** 6.0.3
+- **expo-sqlite**: base de datos local
+- **Drizzle ORM** 0.45.3 + **drizzle-kit** 0.31.11: esquema, migraciones y consultas
+- **expo-file-system** (API nueva `File`/`Directory`/`Paths`): archivos permanentes
 - **expo-camera**: Acceso a cámara
 - **expo-location**: GPS y permisos
 - **expo-sensors**: Acelerómetro

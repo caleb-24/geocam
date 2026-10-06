@@ -28,6 +28,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="fotos"
+        options={{
+          title: 'Fotos',
+          tabBarIcon: ({ color }) => <Ionicons name="images" size={24} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
