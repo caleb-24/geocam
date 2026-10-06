@@ -112,10 +112,12 @@ npx expo start -c
 > plugin `inline-import` y la extensión `.sql`. Si ves "no such table", la
 > migración no se aplicó: reinicia con `npx expo start -c`.
 >
-> Arranque verificado con `npx expo start -c` (6 oct 2026). El bundling
-> compila las rutas `foto/[id]` y los tabs con las migraciones aplicadas:
+> ### Evidencia Semana 7 — arranque con migraciones (6 oct 2026)
 >
-> ![Terminal con el bundling de la app y rutas aplicadas](docs/screenshots/expo-start-bundling.png)
+> Log de ingreso de la app con `npx expo start -c`: el bundling compila las
+> rutas `foto/[id]` y los tabs con las migraciones de la Semana 7 aplicadas:
+>
+> ![Log de arranque: bundling con rutas y migraciones de la Semana 7](docs/screenshots/expo-start-bundling.png)
 >
 > Nota: los avisos `No route named "+not-found"` visibles en la captura
 > corresponden a una referencia sin archivo, ya eliminada de
