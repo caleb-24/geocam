@@ -112,9 +112,11 @@ npx expo start -c
 > plugin `inline-import` y la extensión `.sql`. Si ves "no such table", la
 > migración no se aplicó: reinicia con `npx expo start -c`.
 >
-> Arranque verificado con `npx expo start -c` (6 oct 2026):
+> Arranque verificado con `npx expo start -c` (6 oct 2026).
 >
-> ![Bundling de la app con las rutas foto/[id] y tabs](docs/screenshots/expo-start-bundling.png)
+> Nota: el arranque mostraba el aviso `No route named "+not-found" exists`
+> porque el layout declaraba esa pantalla sin archivo. Se eliminó la
+> referencia en `src/app/_layout.tsx`; `tsc` y `lint` pasan en 0.
 
 Escanea el código QR con **Expo Go** en tu teléfono físico.
 
