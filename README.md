@@ -19,6 +19,16 @@ Una cámara inteligente que etiqueta cada foto con coordenadas GPS y reacciona a
 - **Información de ubicación** (coordenadas y precisión)
 - **Grid de fotos** sin ubicación
 
+#### Carrusel por ubicación (evidencia en dispositivo, 6 oct 2026)
+
+Fotos del mismo lugar agrupadas en un marcador con contador; al tocarlo se abre el carrusel:
+
+![Carrusel de fotos agrupadas por ubicación en Riohacha](docs/screenshots/mapa-carrusel.jpeg)
+
+Flujo completo en el teléfono:
+
+<video src="docs/screenshots/flujo-geocam.mp4" width="360" controls></video>
+
 ### Pantalla Fotos (lista + filtros)
 - **Buscador por nota** (`like`) y filtros por **álbum** y **favoritas**
 - La consulta se reconstruye con `useLiveQuery(consulta, [busqueda, albumId, soloFavoritas])`: todo se recalcula solo
