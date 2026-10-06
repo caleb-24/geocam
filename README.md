@@ -27,7 +27,9 @@ Fotos del mismo lugar agrupadas en un marcador con contador; al tocarlo se abre 
 
 Flujo completo en el teléfono:
 
-<video src="docs/screenshots/flujo-geocam.mp4" width="360" controls></video>
+![GIF del flujo: captura, mapa con carrusel y detalle](docs/screenshots/flujo-geocam.gif)
+
+> Si el GIF no anima, ver el [video original](docs/screenshots/flujo-geocam.mp4).
 
 ### Pantalla Fotos (lista + filtros)
 - **Buscador por nota** (`like`) y filtros por **álbum** y **favoritas**
@@ -109,6 +111,10 @@ npx expo start -c
 > Usa `-c` (limpiar caché) la primera vez: Babel y Metro deben registrar el
 > plugin `inline-import` y la extensión `.sql`. Si ves "no such table", la
 > migración no se aplicó: reinicia con `npx expo start -c`.
+>
+> Arranque verificado con `npx expo start -c` (6 oct 2026):
+>
+> ![Bundling de la app con las rutas foto/[id] y tabs](docs/screenshots/expo-start-bundling.png)
 
 Escanea el código QR con **Expo Go** en tu teléfono físico.
 

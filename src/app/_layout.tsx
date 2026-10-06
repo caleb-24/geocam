@@ -48,7 +48,6 @@ export default function RootLayout() {
             headerTintColor: '#10b981',
           }}
         />
-        <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>
   );
